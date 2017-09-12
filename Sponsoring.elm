@@ -16,54 +16,6 @@ type Msg
     = Select StripePlan
 
 
-
---
---
--- type alias MarkdownString =
---     String
---
---
--- type alias Plan =
---     { id : Int
---     , name : String
---     , phoneNumber : String
---     }
---
---
--- handleHistory : HistoryMsg -> History Route -> History Route
--- handleHistory route history =
---     case route of
---         _ ->
---             history
---
---
--- gray : Color.Color
--- gray =
---     Color.grayscale 0.1
---
---
--- pageCenter : Elegant.Style -> Elegant.Style
--- pageCenter =
---     [ Elegant.displayFlex
---     , Elegant.alignItemsCenter
---     , Elegant.justifyContentCenter
---     , Elegant.height (Vh 100)
---     ]
---         |> compose
---
---
--- planBodyView : { b | maybePlan : Maybe Plan } -> Node msg
--- planBodyView data =
---     case data.maybePlan of
---         Nothing ->
---             text ""
---
---         Just plan ->
---             div [ style [ pageCenter ] ] [ text plan.name, br [], text plan.phoneNumber ]
---
---
-
-
 type StripePlan
     = Mensual
     | Semestrial
@@ -110,7 +62,7 @@ getStripeData stripePlan =
     let
         commonData =
             [ ( "image", "https://stripe.com/img/documentation/checkout/marketplace.png" )
-            , ( "key", "pk_test_5PnH5aLwZzbYlDjsGijmGhGz" )
+            , ( "key", "##stripe_key##" )
             , ( "panel-label", "Sponsoriser" )
             , ( "currency", "EUR" )
             , ( "allow-remember-me", "false" )
@@ -180,10 +132,15 @@ stripeButton stripePlan currentStripePlan =
                 [ Elegant.displayNone ]
             )
         ]
-        [ script
-            [ src ("https://checkout.stripe.com/checkout.js")
-            , class [ "stripe-button" ]
-            , data (getStripeData stripePlan)
+        [ form
+            [ action "https://123123123123.execute-api.us-west-2.amazonaws.com/production"
+            , postMethod
+            ]
+            [ script
+                [ src ("https://checkout.stripe.com/checkout.js")
+                , class [ "stripe-button" ]
+                , data (getStripeData stripePlan)
+                ]
             ]
         ]
 

@@ -32,6 +32,8 @@ module BodyBuilderHtml
         , checked
         , selectOption
         , selected
+        , action
+        , method
         , target
         , width
         , height
@@ -91,6 +93,8 @@ module BodyBuilderHtml
 @docs checked
 @docs selectOption
 @docs selected
+@docs action
+@docs method
 @docs target
 @docs width
 @docs height
@@ -142,6 +146,8 @@ type alias Tree msg =
     , id : Maybe String
     , name : Maybe String
     , selected : Maybe Bool
+    , action : Maybe String
+    , method : Maybe String
     , target : Maybe String
     , tabindex : Maybe Int
     , title : Maybe String
@@ -210,6 +216,8 @@ base =
         , id = Nothing
         , name = Nothing
         , selected = Nothing
+        , action = Nothing
+        , method = Nothing
         , target = Nothing
         , tabindex = Nothing
         , title = Nothing
@@ -374,6 +382,8 @@ htmlAttributesToHtml (HtmlAttributes val) =
                             , Helpers.emptyListOrApply Html.Attributes.checked val.checked
                             , Helpers.emptyListOrApply Html.Attributes.href val.href
                             , Helpers.emptyListOrApply Html.Attributes.selected val.selected
+                            , Helpers.emptyListOrApply Html.Attributes.action val.action
+                            , Helpers.emptyListOrApply Html.Attributes.method val.method
                             , Helpers.emptyListOrApply Html.Attributes.target val.target
                             , Helpers.emptyListOrApply Html.Attributes.disabled val.disabled
                             , Helpers.emptyListOrApply Html.Attributes.width val.width
@@ -513,6 +523,18 @@ label val (HtmlAttributes attrs) =
 removeLabel : HtmlAttributes msg -> HtmlAttributes msg
 removeLabel (HtmlAttributes attrs) =
     HtmlAttributes { attrs | label = Nothing }
+
+
+{-| -}
+action : String -> HtmlAttributes msg -> HtmlAttributes msg
+action val (HtmlAttributes attrs) =
+    HtmlAttributes { attrs | action = Just val }
+
+
+{-| -}
+method : String -> HtmlAttributes msg -> HtmlAttributes msg
+method val (HtmlAttributes attrs) =
+    HtmlAttributes { attrs | method = Just val }
 
 
 {-| -}

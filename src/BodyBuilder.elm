@@ -24,6 +24,8 @@ module BodyBuilder
         , TabindexAttribute
         , TitleAttribute
         , StyleAttribute
+        , ActionAttribute
+        , MethodAttribute
         , TargetAttribute
         , HrefAttribute
         , SrcAttribute
@@ -66,6 +68,7 @@ module BodyBuilder
         , h4
         , h5
         , h6
+        , form
         , a
         , button
         , div
@@ -135,6 +138,9 @@ module BodyBuilder
         , style
         , hoverStyle
         , focusStyle
+        , action
+        , getMethod
+        , postMethod
         , target
         , name
         , width
@@ -174,6 +180,8 @@ module BodyBuilder
 @docs TabindexAttribute
 @docs TitleAttribute
 @docs StyleAttribute
+@docs ActionAttribute
+@docs MethodAttribute
 @docs TargetAttribute
 @docs HrefAttribute
 @docs SrcAttribute
@@ -216,6 +224,7 @@ module BodyBuilder
 @docs h4
 @docs h5
 @docs h6
+@docs form
 @docs a
 @docs button
 @docs div
@@ -285,6 +294,9 @@ module BodyBuilder
 @docs style
 @docs hoverStyle
 @docs focusStyle
+@docs action
+@docs getMethod
+@docs postMethod
 @docs target
 @docs name
 @docs width
@@ -309,6 +321,11 @@ import Json.Decode exposing (Decoder)
 
 type alias Url =
     String
+
+
+type FormMethod
+    = Get
+    | Post
 
 
 unwrap : (a -> b -> b) -> Maybe a -> b -> b
@@ -526,6 +543,16 @@ type alias VisibleAttributesAndEvents msg a =
 
 
 {-| -}
+type alias ActionAttribute a =
+    { a | action : Maybe String }
+
+
+{-| -}
+type alias MethodAttribute a =
+    { a | method : Maybe String }
+
+
+{-| -}
 type alias TargetAttribute a =
     { a | target : Maybe String }
 
@@ -646,6 +673,11 @@ type Position
    ██      ██      ██      ██  ██  ██     ██   ██    ██       ██    ██   ██      ██
    ███████ ███████ ███████ ██      ██     ██   ██    ██       ██    ██   ██ ███████
 -}
+
+
+{-| -}
+type alias FormAttributes msg =
+    ActionAttribute (MethodAttribute (VisibleAttributesAndEvents msg {}))
 
 
 {-| -}
@@ -806,6 +838,7 @@ positionToString position =
 {-| -}
 type Node msg
     = A (AAttributes msg) (List (Node msg))
+    | Form (FormAttributes msg) (List (Node msg))
     | Div (FlowAttributes msg) (List (Node msg))
     | P (FlowAttributes msg) (List (Node msg))
     | Span (FlowAttributes msg) (List (Node msg))
@@ -945,6 +978,26 @@ h6 :
     -> Node msg
 h6 =
     H 6 << (flowDefaultsComposedToAttrsWithStyle [ Elegant.h6S ])
+
+
+{-| -}
+form :
+    List (FormAttributes msg -> FormAttributes msg)
+    -> List (Node msg)
+    -> Node msg
+form =
+    (Form
+        << defaultsComposedToAttrs
+            { action = Nothing
+            , method = Just "Get"
+            , style = defaultStyleAttribute
+            , universal = defaultUniversalAttributes
+            , onMouseEvents = defaultOnMouseEvents
+            , onEvent = Nothing
+            , onBlurEvent = Nothing
+            , onFocusEvent = Nothing
+            }
+    )
 
 
 {-| -}
@@ -1833,6 +1886,42 @@ focusStyle val ({ style } as attrs) =
 
 
 {-| -}
+action :
+    String
+    -> ActionAttribute a
+    -> ActionAttribute a
+action val attrs =
+    { attrs | action = Just val }
+
+
+{-| -}
+getMethod attrs =
+    method Get attrs
+
+
+{-| -}
+postMethod attrs =
+    method Post attrs
+
+
+method :
+    FormMethod
+    -> MethodAttribute a
+    -> MethodAttribute a
+method method attrs =
+    let
+        val =
+            case method of
+                Get ->
+                    Just "GET"
+
+                Post ->
+                    Just "POST"
+    in
+        { attrs | method = val }
+
+
+{-| -}
 target :
     String
     -> TargetAttribute a
@@ -2179,6 +2268,22 @@ handleChecked { checked } =
     BodyBuilderHtml.checked checked
 
 
+handleAction :
+    ActionAttribute a
+    -> HtmlAttributes msg
+    -> HtmlAttributes msg
+handleAction { action } =
+    unwrap BodyBuilderHtml.action action
+
+
+handleMethod :
+    MethodAttribute a
+    -> HtmlAttributes msg
+    -> HtmlAttributes msg
+handleMethod { method } =
+    unwrap BodyBuilderHtml.method method
+
+
 handleTarget :
     TargetAttribute a
     -> HtmlAttributes msg
@@ -2348,6 +2453,17 @@ toTree :
     -> BodyBuilderHtml.HtmlAttributes msg
 toTree node =
     case node of
+        Form attributes children ->
+            parentToHtml children
+                attributes
+                "form"
+                (baseHandling
+                    |> List.append
+                        [ handleAction
+                        , handleMethod
+                        ]
+                )
+
         A attributes children ->
             parentToHtml children
                 attributes
