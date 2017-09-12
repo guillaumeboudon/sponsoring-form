@@ -132,10 +132,8 @@ stripeButton stripePlan currentStripePlan =
                 [ Elegant.displayNone ]
             )
         ]
-        [ form
-            [ action "https://123123123123.execute-api.us-west-2.amazonaws.com/production"
-            , postMethod
-            ]
+        [ formPost "https://123123123123.execute-api.us-west-2.amazonaws.com/production"
+            []
             [ script
                 [ src ("https://checkout.stripe.com/checkout.js")
                 , class [ "stripe-button" ]

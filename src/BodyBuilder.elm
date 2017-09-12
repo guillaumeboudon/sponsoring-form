@@ -68,7 +68,8 @@ module BodyBuilder
         , h4
         , h5
         , h6
-        , form
+        , formGet
+        , formPost
         , a
         , button
         , div
@@ -138,9 +139,6 @@ module BodyBuilder
         , style
         , hoverStyle
         , focusStyle
-        , action
-        , getMethod
-        , postMethod
         , target
         , name
         , width
@@ -224,7 +222,8 @@ module BodyBuilder
 @docs h4
 @docs h5
 @docs h6
-@docs form
+@docs formGet
+@docs formPost
 @docs a
 @docs button
 @docs div
@@ -294,9 +293,6 @@ module BodyBuilder
 @docs style
 @docs hoverStyle
 @docs focusStyle
-@docs action
-@docs getMethod
-@docs postMethod
 @docs target
 @docs name
 @docs width
@@ -981,23 +977,63 @@ h6 =
 
 
 {-| -}
-form :
-    List (FormAttributes msg -> FormAttributes msg)
+formGet :
+    String
+    -> List (FormAttributes msg -> FormAttributes msg)
     -> List (Node msg)
     -> Node msg
-form =
-    (Form
-        << defaultsComposedToAttrs
-            { action = Nothing
-            , method = Just "Get"
-            , style = defaultStyleAttribute
-            , universal = defaultUniversalAttributes
-            , onMouseEvents = defaultOnMouseEvents
-            , onEvent = Nothing
-            , onBlurEvent = Nothing
-            , onFocusEvent = Nothing
-            }
-    )
+formGet action =
+    formMethod Get action
+
+
+{-| -}
+formPost :
+    String
+    -> List (FormAttributes msg -> FormAttributes msg)
+    -> List (Node msg)
+    -> Node msg
+formPost action =
+    formMethod Post action
+
+
+formMethod :
+    FormMethod
+    -> String
+    -> List (FormAttributes msg -> FormAttributes msg)
+    -> List (Node msg)
+    -> Node msg
+formMethod formMethod action =
+    form formMethod action
+
+
+form :
+    FormMethod
+    -> String
+    -> List (FormAttributes msg -> FormAttributes msg)
+    -> List (Node msg)
+    -> Node msg
+form formMethod action =
+    let
+        method =
+            case formMethod of
+                Get ->
+                    "GET"
+
+                Post ->
+                    "POST"
+    in
+        (Form
+            << defaultsComposedToAttrs
+                { action = Just action
+                , method = Just method
+                , style = defaultStyleAttribute
+                , universal = defaultUniversalAttributes
+                , onMouseEvents = defaultOnMouseEvents
+                , onEvent = Nothing
+                , onBlurEvent = Nothing
+                , onFocusEvent = Nothing
+                }
+        )
 
 
 {-| -}
@@ -1883,42 +1919,6 @@ focusStyle val ({ style } as attrs) =
             { style | focus = style.focus ++ val }
     in
         { attrs | style = newStyle }
-
-
-{-| -}
-action :
-    String
-    -> ActionAttribute a
-    -> ActionAttribute a
-action val attrs =
-    { attrs | action = Just val }
-
-
-{-| -}
-getMethod attrs =
-    method Get attrs
-
-
-{-| -}
-postMethod attrs =
-    method Post attrs
-
-
-method :
-    FormMethod
-    -> MethodAttribute a
-    -> MethodAttribute a
-method method attrs =
-    let
-        val =
-            case method of
-                Get ->
-                    Just "GET"
-
-                Post ->
-                    Just "POST"
-    in
-        { attrs | method = val }
 
 
 {-| -}
