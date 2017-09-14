@@ -6,6 +6,8 @@ import Elegant exposing (..)
 import Color
 import Json.Decode as Decode
 import Json.Encode as Encode
+import Card
+import Function exposing (..)
 
 
 main : Program Never Model Msg
@@ -30,7 +32,7 @@ init =
 initialModel : Model
 initialModel =
     { currentPage = StripeForm
-    , stripePlan = NoPlan
+    , stripePlan = Mensual
     , token = Nothing
     , creditCard = initialCreditCardModel
     , subscriptionResult = Nothing
@@ -39,10 +41,10 @@ initialModel =
 
 initialCreditCardModel : CreditCardModel
 initialCreditCardModel =
-    { email = "toto@tata.com"
-    , ccNumber = "4242424242424242"
-    , expiration = "01/21"
-    , cvc = "111"
+    { email = ""
+    , ccNumber = ""
+    , expiration = ""
+    , cvv = ""
     }
 
 
@@ -59,13 +61,12 @@ type alias CreditCardModel =
     { email : String
     , ccNumber : String
     , expiration : String
-    , cvc : String
+    , cvv : String
     }
 
 
 type StripePlan
-    = NoPlan
-    | Mensual
+    = Mensual
     | Semestrial
     | Annual
 
@@ -101,13 +102,33 @@ stripeForm : Model -> Node Interactive NotPhrasing Spanning NotListElement Msg
 stripeForm model =
     div []
         [ planSelectionButtons model.stripePlan
-        , case model.stripePlan of
-            NoPlan ->
-                div [] []
-
-            _ ->
-                subscriptionForm model
+        , subscriptionForm model
         ]
+
+
+gray =
+    (Color.rgba 124 124 126 0.247)
+
+
+formFieldContainer =
+    div
+        [ style
+            [ borderSolid
+            , borderRadius 4
+            , borderWidth 1
+            , overflowHidden
+            , borderColor gray
+            , marginBottom medium
+            ]
+        ]
+
+
+baseInput =
+    [ padding medium
+    , borderNone
+    , fontSize (Px 15)
+    ]
+        |> compose
 
 
 subscriptionForm model =
@@ -116,16 +137,36 @@ subscriptionForm model =
             [ borderColor Color.grey
             , borderSolid
             , borderWidth 1
-            , maxWidth (Px 700)
-            , padding medium
+            , maxWidth (Px 300)
+            , padding large
             , marginAuto
+            , backgroundColor (Color.rgb 245 245 247)
+            , displayFlex
+            , flexDirectionColumn
             ]
         ]
-        [ inputText [ onInput (CreditCard << SetName), name "email", value model.creditCard.email, placeholder "email" ]
-        , inputText [ onInput (CreditCard << SetCcNumber), name "ccNumber", value model.creditCard.ccNumber, placeholder "n° carte" ]
-        , inputText [ onInput (CreditCard << SetExpiration), name "expiration", value model.creditCard.expiration, placeholder "expiration" ]
-        , inputText [ onInput (CreditCard << SetCvc), name "cvc", value model.creditCard.cvc, placeholder "cvc" ]
-        , button [ onClick AskForToken ] [ text "Souscrire" ]
+        [ formFieldContainer
+            [ inputText [ style [ baseInput, fullWidth ], onInput (CreditCard << SetName), name "email", value model.creditCard.email, placeholder "email" ]
+            ]
+        , formFieldContainer
+            [ inputText [ style [ baseInput, fullWidth, borderBottomColor gray, borderBottomSolid, borderBottomWidth 1 ], onInput (CreditCard << SetCcNumber), name "ccNumber", value (model.creditCard.ccNumber |> Card.numberFormat), placeholder "n° carte" ]
+            , inputText [ style [ baseInput, Elegant.width (Percent 50), borderRightColor gray, borderRightSolid, borderRightWidth 1 ], onInput (CreditCard << SetExpiration), name "expiration", value (model.creditCard.expiration), placeholder "expiration" ]
+            , inputText [ style [ baseInput, Elegant.width (Percent 50) ], onInput (CreditCard << SetCvv), name "cvv", value (model.creditCard.cvv |> Card.cvvFormat), placeholder "cvv" ]
+            ]
+        , button
+            [ style
+                [ backgroundColor (Color.rgb 2 162 228)
+                , baseInput
+                , textColor Color.white
+                , bold
+                , cursorPointer
+                , borderRadius 4
+                , marginTop medium
+                ]
+            , onClick AskForToken
+            ]
+            [ text "Sponsoriser" ]
+        , p [ style [ fontSize (Px 11) ] ] [ text "La résiliation se fait par simple mail à thibaut@milesrock.com" ]
         ]
 
 
@@ -189,11 +230,8 @@ stripePlanDescription :
     -> Node interactiveContent phrasingContent spanningContent NotListElement msg
 stripePlanDescription stripePlan =
     case stripePlan of
-        NoPlan ->
-            text ""
-
         Mensual ->
-            text "540 € HT / mois"
+            text "450 € HT / mois"
 
         Semestrial ->
             text "3060 € (soit 425€ HT / mois)"
@@ -218,7 +256,7 @@ type CreditCardMsg
     = SetName String
     | SetCcNumber String
     | SetExpiration String
-    | SetCvc String
+    | SetCvv String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -243,7 +281,8 @@ update msg model =
                     { model
                         | token =
                             Just token
-                            -- , creditCard = initialCreditCardModel
+
+                        -- , creditCard = initialCreditCardModel
                     }
             in
                 ( newModel
@@ -273,13 +312,13 @@ updateCreditCard msg model =
             { model | email = email }
 
         SetCcNumber ccNumber ->
-            { model | ccNumber = ccNumber }
+            { model | ccNumber = ccNumber |> Card.onlyNumbers }
 
         SetExpiration expiration ->
-            { model | expiration = expiration }
+            { model | expiration = expiration |> Card.onlyNumbersAndSlash }
 
-        SetCvc cvc ->
-            { model | cvc = cvc }
+        SetCvv cvv ->
+            { model | cvv = cvv |> Card.onlyNumbers }
 
 
 
@@ -319,9 +358,6 @@ postSubscription model =
 
         stripePlanId =
             case model.stripePlan of
-                NoPlan ->
-                    ""
-
                 Mensual ->
                     "mensual-parisrb"
 
