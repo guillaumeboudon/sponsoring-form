@@ -1,0 +1,15 @@
+{
+  "license": "BSD3",
+  "scripts": {
+    "prebuild": "rimraf dist",
+    "build": "webpack",
+    "client": "webpack-dev-server --hot --inline"
+  },
+  "dependencies": {
+    "elm-webpack-loader": "^4.3.1",
+    "file-loader": "^0.11.2",
+    "rimraf": "^2.6.1",
+    "webpack": "^3.5.5",
+    "webpack-dev-server": "^2.7.1"
+  }
+}
